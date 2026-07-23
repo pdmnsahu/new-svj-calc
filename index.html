@@ -684,54 +684,59 @@
 </script>
 
 <!-- PWA Manifest & Service Worker Registration Script -->
-<script>
-  // Dynamically inject Manifest as a Blob URL
-  (function() {
-    var manifest = {
-      name: "Shree Vinayak Jewellers",
-      short_name: "SVJ Rates",
-      description: "Live jewellery rate calculator — Shree Vinayak Jewellers",
-      start_url: "./",
-      display: "standalone",
-      background_color: "#0a0a0a",
-      theme_color: "#8a7322",
-      orientation: "portrait-primary"
-    };
-    var blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-    var url  = URL.createObjectURL(blob);
-    document.getElementById('pwa-manifest').href = url;
-  })();
-
-  // Register inline Service Worker for offline PWA support
-  if ('serviceWorker' in navigator) {
-    var swCode = `
-      var CACHE = 'svj-calc-v4';
-      self.addEventListener('install', function(e) {
-        e.waitUntil(
-          caches.open(CACHE).then(function(c) { return c.addAll(['./', './index.html']); })
-        );
-        self.skipWaiting();
-      });
-      self.addEventListener('activate', function(e) {
-        e.waitUntil(
-          caches.keys().then(function(keys) {
-            return Promise.all(keys.filter(function(k){ return k !== CACHE; }).map(function(k){ return caches.delete(k); }));
-          })
-        );
-        self.clients.claim();
-      });
-      self.addEventListener('fetch', function(e) {
-        e.respondWith(
-          caches.match(e.request).then(function(r) { return r || fetch(e.request); })
-        );
-      });
-    `;
-    var swBlob = new Blob([swCode], { type: 'application/javascript' });
-    var swUrl  = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swUrl).catch(function(err) {
-      console.warn('SW registration failed:', err);
+  <script>
+// ── PWA: inject manifest as a blob URL ──
+(function() {
+  var iconB64 = document.querySelector('.title-bar img').src; // already data URI
+  var manifest = {
+    name: "Shree Vinayak Jewellers",
+    short_name: "SVJ Rates",
+    description: "Live jewellery rate calculator for 22K Gold, 18K Gold and Silver",
+    start_url: "./",
+    display: "standalone",
+    background_color: "#000000",
+    theme_color: "#8B0000",
+    orientation: "portrait-primary",
+    icons: [
+      { src: iconB64, sizes: "192x192", type: "image/png" },
+      { src: iconB64, sizes: "512x512", type: "image/png" }
+    ]
+  };
+  var blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  var url  = URL.createObjectURL(blob);
+  document.getElementById('pwa-manifest').href = url;
+})();
+ 
+// ── PWA: register inline service worker for offline support ──
+if ('serviceWorker' in navigator) {
+  var swCode = `
+    var CACHE = 'svj-calc-v1';
+    self.addEventListener('install', function(e) {
+      e.waitUntil(
+        caches.open(CACHE).then(function(c) { return c.addAll(['./', './index.html']); })
+      );
+      self.skipWaiting();
     });
-  }
-</script>
+    self.addEventListener('activate', function(e) {
+      e.waitUntil(
+        caches.keys().then(function(keys) {
+          return Promise.all(keys.filter(function(k){ return k !== CACHE; }).map(function(k){ return caches.delete(k); }));
+        })
+      );
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', function(e) {
+      e.respondWith(
+        caches.match(e.request).then(function(r) { return r || fetch(e.request); })
+      );
+    });
+  `;
+  var swBlob = new Blob([swCode], { type: 'application/javascript' });
+  var swUrl  = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(function(err) {
+    console.warn('SW registration failed:', err);
+  });
+}
+  </script>
 </body>
 </html>
